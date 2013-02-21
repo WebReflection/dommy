@@ -1,0 +1,22 @@
+{
+  "version": "0.0.0",
+  "name": "dommy",
+  "description": "",
+  "homepage": "https://github.com/WebReflection/dommy",
+  "keywords": [],
+  "author": {
+    "name": "",
+    "web": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/WebReflection/dommy.git"
+  },
+  "main": "./build/dommy.node.js",
+  "scripts": {
+    "test": "node test/.test.js"
+  },
+  "dependencies": {
+    "wru": ">= 0.0.0"
+  }
+}
