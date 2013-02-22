@@ -4,7 +4,14 @@
 REPO = dommy
 
 # make var files
-VAR = src/$(REPO).js
+VAR = src/WeakShim.js     \
+      src/CustomEvent.js  \
+      src/DOMHandler.js   \
+      src/$(REPO).js      \
+      src/find.js         \
+      src/experimental.js \
+      src/supports.js     \
+      src/NodeList.prototype.js
 
 # make node files
 NODE = $(VAR)
@@ -15,9 +22,9 @@ AMD = $(VAR)
 # default build task
 build:
 	make var
-	make node
-	make amd
-	make test
+#	make node
+#	make amd
+#	make test
 #	make hint
 
 # build generic version
