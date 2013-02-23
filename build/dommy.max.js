@@ -22,18 +22,25 @@ THE SOFTWARE.
 */
 (function(window, undefined){
 var WeakShim = window.WeakMap || function WeakShim(){
-  var indexOf = "indexOf", keys = [], values = [], i;
-  return {
-    get: function (key) {
-      return values[keys[indexOf](key)];
+  var
+    keys = [],
+    values = [],
+    ws = {
+      get: function (key) {
+        return values[keys.indexOf(key)];
+      },
+      has: function (key) {
+        return -1 < (i = keys.indexOf(key));
+      },
+      set: function (key, value) {
+        values[ws.has(key) ? i : keys.push(key) - 1] = value;
+      },
+      "delete": function (key) {
+        if (ws.has(key)) keys.splice(i, 1), values.splice(i, 1);
+      }
     },
-    set: function (key, value) {
-      values[~(i = keys[indexOf](key)) ? i : keys.push(key) - 1] = value;
-    },
-    "delete": function (key) {
-      if (~(i = keys[indexOf](key))) keys.splice(i, 1), values.splice(i, 1);
-    }
-  };
+    i;
+  return ws;
 };
 window.CustomEvent || (window.CustomEvent = function(){
   function initCustomEvent(
@@ -57,55 +64,68 @@ window.CustomEvent || (window.CustomEvent = function(){
   };
 }());
 function DOMHandler() {}
-function push(array, value) {
-  var i = array.indexOf(value);
-  return i < 0 ? array.push(value) - 1 : i;
-}
-function splice(array, value) {
-  var i = array.indexOf(value);
-  if (-1 < i) {
-    array.splice(i, 1);
+(function(DOMHandlerPrototype){
+  function push(array, value) {
+    var i = array.indexOf(value);
+    return i < 0 ? array.push(value) - 1 : i;
   }
-  return i;
-}
-var DOMHandlerPrototype = DOMHandler.prototype;
-DOMHandlerPrototype.target =
-DOMHandlerPrototype.handler = null;
-DOMHandlerPrototype.on = function on(type, target, handler) {
-  var
-    handlers = this[type] || (this[type] = {
-      target: [],
-      handler: []
-    }),
-    i = push(handlers.target, target)
-  ;
-  return -1 < push(handlers.handler[i] || (handlers.handler[i] = []), handler);
-};
-DOMHandlerPrototype.off = function off(type, target, handler) {
-  var handlers = this[type], i, j;
-  if (handlers) {
-    i = handlers.target.indexOf(target);
+  function splice(array, value) {
+    var i = array.indexOf(value);
     if (-1 < i) {
-      j = handlers.handler[i].indexOf(handler);
-      if (-1 < j) {
-        handlers.handler[i].splice(j, 1);
-        if (!handlers.handler[i].length) {
-          handlers.handler.splice(i, 1);
-          handlers.target.splice(i, 1);
-          if (!handlers.target.length) {
-            delete this[type];
+      array.splice(i, 1);
+    }
+    return i;
+  }
+  DOMHandlerPrototype.on = function on(type, target, handler) {
+    var
+      handlers = this[type] || (this[type] = {
+        target: [],
+        handler: []
+      }),
+      i = push(handlers.target, target)
+    ;
+    return -1 < push(handlers.handler[i] || (handlers.handler[i] = []), handler);
+  };
+  DOMHandlerPrototype.off = function off(type, target, handler) {
+    var handlers = this[type], i, j;
+    if (handlers) {
+      i = handlers.target.indexOf(target);
+      if (-1 < i) {
+        j = handlers.handler[i].indexOf(handler);
+        if (-1 < j) {
+          handlers.handler[i].splice(j, 1);
+          if (!handlers.handler[i].length) {
+            handlers.handler.splice(i, 1);
+            handlers.target.splice(i, 1);
+            if (!handlers.target.length) {
+              delete this[type];
+            }
+            return true;
           }
-          return true;
         }
       }
     }
-  }
-};
+  };
+}(DOMHandler.prototype));
+
 var
   ws = new WeakShim,
   HTMLElementPrototype = (
     window.HTMLElement || window.Element
-  ).prototype;
+  ).prototype,
+  splitEvents = /,\s*/,
+  noCamelCase = /^[a-z]+$/,
+  addDOMAsEventListener = function (target, type, self, capture) {
+    target.addEventListener(type, self, capture);
+  },
+  removeDOMAsEventListener = function (target, type, self, capture) {
+    target.removeEventListener(type, self, capture);
+  },
+  dummy = document.createElement('_');
+
+function discoverJSKey(self, key) {
+  return experimental(self, key, "js") || experimental(window, key, "js") || key;
+}
 
 function notify(self, h, e) {
   h.handleEvent ? h.handleEvent(e) : h.call(self, e);
@@ -123,29 +143,63 @@ HTMLElementPrototype.handleEvent = function handleEvent(e) {
   }
 };
 
+window.on =
+document.on =
 HTMLElementPrototype.on = function on(target, type, handler, capture) {
-  if (typeof target === "string") {
-    this.addEventListener(target, type, !!handler);
-  } else {
-    var dh = ws.get(this);
-    if (!dh) {
-      ws.set(this, dh = new DOMHandler);
+  for (var
+    self = this,
+    selfListener = typeof target === 'string',
+    actions = (selfListener ? target : type).split(splitEvents),
+    bcapture = !!(selfListener ? handler : capture),
+    dh = selfListener || ws.get(self),
+    key, lower,
+    i = 0; i < actions.length; i++
+  ) {
+    key = discoverJSKey(self, actions[i]);
+    noCamelCase.test(key) || (
+      lower = key.toLowerCase()
+    );
+    if (selfListener) {
+      addDOMAsEventListener(self, key, type, bcapture);
+      lower && addDOMAsEventListener(self, lower, type, bcapture);
+    } else {
+      if (!dh) {
+        ws.set(self, dh = new DOMHandler);
+      }
+      dh.on(key, target, handler);
+      addDOMAsEventListener(target, key, self, bcapture);
+      lower && addDOMAsEventListener(target, lower, self, bcapture);
     }
-    dh.on(type, target, handler);
-    target.addEventListener(type, this, !!capture);
   }
   return this;
 };
 
-HTMLElementPrototype.off = function on(target, type, handler, capture) {
-  if (typeof target === "string") {
-    this.removeEventListener(target, type, !!handler);
-  } else {
-    var dh = ws.get(this);
-    if (dh && dh.off(type, target, handler)) {
-      target.removeEventListener(type, this, !!capture);
-      if (!Object.keys(dh).length) {
-        ws['delete'](this);
+window.off =
+document.off =
+HTMLElementPrototype.off = function off(target, type, handler, capture) {
+  for (var
+    self = this,
+    selfListener = typeof target === 'string',
+    actions = (selfListener ? target : type).split(splitEvents),
+    bcapture = !!(selfListener ? handler : capture),
+    dh = selfListener || ws.get(self),
+    key, lower,
+    i = 0; i < actions.length; i++
+  ) {
+    key = discoverJSKey(self, actions[i]);
+    noCamelCase.test(key) || (
+      lower = key.toLowerCase()
+    );
+    if (selfListener) {
+      removeDOMAsEventListener(self, key, type, bcapture);
+      lower && removeDOMAsEventListener(self, lower, type, bcapture);
+    } else {
+      if (dh && dh.off(key, target, handler)) {
+        removeDOMAsEventListener(target, key, self, bcapture);
+        lower && removeDOMAsEventListener(target, lower, self, bcapture);
+        if (!Object.keys(dh).length) {
+          ws['delete'](self);
+        }
       }
     }
   }
@@ -156,18 +210,86 @@ HTMLElementPrototype.css = function css(key, value) {
   var
     self = this,
     style = self.style,
+    string = typeof key === 'string',
+    css, list, i, out, p;
+  if (string) {
     css = experimental(style, key, "css");
-  if (value !== undefined) {
-    if (css) {
-      style.cssText += ';' + css + '=' + value;
+    if (value === undefined) {
+      return css && getComputedStyle(self, null).getPropertyValue(css);
+    } else if (css) {
+      style.cssText += ';' + css + ':' + value;
     }
-    return self;
+  } else {
+    for (
+      list = Object.keys(key),
+      out = [],
+      i = 0; i < list.length; i++
+    ){
+      if (css = experimental(style, p = list[i], "css")) {
+        out.push(';', css, ':', key[p]);
+      }
+    }
+    style.cssText += out.join('');
   }
-  return css && getComputedStyle(self, null).getPropertyValue(css);
+  return self;
 };
 
-document.find = HTMLElementPrototype.find = function (css) {
+window.fire =
+document.fire =
+HTMLElementPrototype.fire = function fire(type, detail) {
+  this.dispatchEvent(new CustomEvent(type, {
+    bubbles: true,
+    cancelable: true,
+    detail: detail
+  }));
+};
+
+document.reflow =
+HTMLElementPrototype.reflow = function reflow() {
+  return (document.documentElement.offsetWidth + 1) && this;
+};
+
+HTMLElementPrototype.createElement = function createElement(nodeName) {
+  return this.appendChild(document.createElement(nodeName));
+};
+
+HTMLElementPrototype.remove || (
+  HTMLElementPrototype.remove = function remove() {
+    var parentNode = this.parentNode;
+    parentNode && parentNode.removeChild(this);
+    return this;
+  }
+);
+
+try {
+  addDOMAsEventListener(dummy, '_', dummy);
+} catch(e) {
+  // Mozilla ... 
+  addDOMAsEventListener = function (target, type, self, capture) {
+    var handleEvent = self.handleEvent;
+    target.addEventListener(
+      type,
+      handleEvent ?
+        self._handleEvent || (
+          self._handleEvent = handleEvent.bind(self)
+        ) :
+        self
+      ,
+      capture
+    );
+  };
+  removeDOMAsEventListener = function (target, type, self, capture) {
+    target.removeEventListener(
+      type,
+      self._handleEvent || self,
+      capture
+    );
+  }
+}document.find = HTMLElementPrototype.find = function find(css) {
   return this.querySelectorAll(css);
+};
+window.$ = function $(css, parent) {
+  return (parent || document).find(css);
 };var experimental = function(cache){
   /*! (C) Andrea Giammarchi - Mit Style License */
   var
@@ -236,10 +358,11 @@ document.find = HTMLElementPrototype.find = function (css) {
 }({});
 window.supports =
 document.supports =
-HTMLElementPrototype.supports = function supports(what, type) {
+HTMLElementPrototype.supports = function supports(what, type, define) {
   var
-    css = this.style && experimental(this.style, what, "css"),
-    js = experimental(this, what, "js");
+    style = this.style,
+    css = style && experimental(style, what, "css"),
+    js = experimental(this, what, define || "js");
   switch(type) {
     case "css":
       return css;
@@ -254,13 +377,10 @@ var
     window.NodeList || document.querySelectorAll("_").constructor
   ).prototype;
 
-function repeatForEach(method) {
-  function invoke(el) {
+function createInvoker(method) {
+  return function invoke(el) {
     method.apply(el, this);
   }
-  return function () {
-    this.forEach(invoke, arguments);
-  };
 };
 
 NodeListPrototype.every = emtyArray.every;
@@ -269,16 +389,30 @@ NodeListPrototype.forEach = emtyArray.forEach;
 NodeListPrototype.map = emtyArray.map;
 NodeListPrototype.some = emtyArray.some;
 
-NodeListPrototype.on = repeatForEach(HTMLElementPrototype.on);
-NodeListPrototype.off = repeatForEach(HTMLElementPrototype.off);
-NodeListPrototype.css = repeatForEach(HTMLElementPrototype.css);
-NodeListPrototype.handleEvent = repeatForEach(HTMLElementPrototype.handleEvent);
+var forEachONOFF = function (method) {
+  var invoke = createInvoker(method);
+  return function () {
+    this.forEach(invoke, arguments);
+    return this;
+  };
+};
+NodeListPrototype.on = forEachONOFF(HTMLElementPrototype.on);
+NodeListPrototype.off = forEachONOFF(HTMLElementPrototype.off);
+
+var forEachCSS = createInvoker(HTMLElementPrototype.css);
+NodeListPrototype.css = function css(key, value) {
+  if (this.length) {
+    if (value !== undefined)
+      return this.forEach(forEachCSS, arguments) || this;
+    return this[0].css(key);
+  }
+};
 
 function supportsThemAll(el) {
-  return el.supports.apply(el, this);
+  return el.supports(this);
 }
-NodeListPrototype.supports = function supports() {
-  return this.every(supportsThemAll, arguments);
+NodeListPrototype.supports = function supports(what) {
+  return this.every(supportsThemAll, what);
 };
 
 }(this));

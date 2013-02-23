@@ -1,4 +1,4 @@
-.PHONY: var node amd hint clean test web pages dependencies
+.PHONY: var node amd size hint clean test web pages dependencies
 
 # repository name
 REPO = dommy
@@ -22,6 +22,7 @@ AMD = $(VAR)
 # default build task
 build:
 	make var
+	make size
 #	make node
 #	make amd
 #	make test
@@ -36,6 +37,12 @@ var:
 	cat template/copyright build/no-copy.$(REPO).js >build/$(REPO).js
 	rm build/no-copy.$(REPO).max.js
 	rm build/no-copy.$(REPO).js
+
+
+size:
+	wc -c build/$(REPO).max.js
+	gzip -c build/$(REPO).js | wc -c
+
 
 # build node.js version
 node:

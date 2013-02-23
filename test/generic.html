@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+  <head>
+    <title>test</title>
+    <style>
+    * {
+      font-family: sans-serif;
+    }
+    div {
+      display: none;
+      background: #EEE;
+    }
+    </style>
+  </head>
+  <body>
+    <button>show div</button>
+    <div>
+      <strong>Hello</strong>
+      <button>close me</button>
+    </div>
+    <script>
+    (function(b){function c(){if(d=e.shift())a=b.body.appendChild(b.createElement("SCRIPT")),a.onload=c,a.src=d}var $=[],e=$.concat(
+      $.forEach ? $ : 'js/es5-shim.js',
+      Object.defineProperty ? $ : 'js/es5-sham.js',
+      Function.bind ? $ : 'js/bind.js',
+      '../build/dommy.max.js',
+      'js/main.js'
+    ),a,d;
+    //alert(e.join("\n"));
+    c()})(document);
+    </script>
+  </body>
+</html>

@@ -1,9 +1,10 @@
 window.supports =
 document.supports =
-HTMLElementPrototype.supports = function supports(what, type) {
+HTMLElementPrototype.supports = function supports(what, type, define) {
   var
-    css = this.style && experimental(this.style, what, "css"),
-    js = experimental(this, what, "js");
+    style = this.style,
+    css = style && experimental(style, what, "css"),
+    js = experimental(this, what, define || "js");
   switch(type) {
     case "css":
       return css;
