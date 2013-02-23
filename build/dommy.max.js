@@ -114,7 +114,7 @@ var
     window.HTMLElement || window.Element
   ).prototype,
   splitEvents = /,\s*/,
-  noCamelCase = /^[a-z]+$/,
+  // noCamelCase = /^[a-z]+$/,
   addDOMAsEventListener = function (target, type, self, capture) {
     target.addEventListener(type, self, capture);
   },
@@ -124,7 +124,7 @@ var
   dummy = document.createElement('_');
 
 function discoverJSKey(self, key) {
-  return experimental(self, key, "js") || experimental(window, key, "js") || key;
+  return experimental(self, key, "js") || experimental(window, key, "js") || key.toLowerCase();
 }
 
 function notify(self, h, e) {
@@ -156,19 +156,21 @@ HTMLElementPrototype.on = function on(target, type, handler, capture) {
     i = 0; i < actions.length; i++
   ) {
     key = discoverJSKey(self, actions[i]);
+    /*
     noCamelCase.test(key) || (
       lower = key.toLowerCase()
     );
+    */
     if (selfListener) {
       addDOMAsEventListener(self, key, type, bcapture);
-      lower && addDOMAsEventListener(self, lower, type, bcapture);
+      //lower && addDOMAsEventListener(self, lower, type, bcapture);
     } else {
       if (!dh) {
         ws.set(self, dh = new DOMHandler);
       }
       dh.on(key, target, handler);
       addDOMAsEventListener(target, key, self, bcapture);
-      lower && addDOMAsEventListener(target, lower, self, bcapture);
+      //lower && addDOMAsEventListener(target, lower, self, bcapture);
     }
   }
   return this;
@@ -187,16 +189,18 @@ HTMLElementPrototype.off = function off(target, type, handler, capture) {
     i = 0; i < actions.length; i++
   ) {
     key = discoverJSKey(self, actions[i]);
+    /*
     noCamelCase.test(key) || (
       lower = key.toLowerCase()
     );
+    */
     if (selfListener) {
       removeDOMAsEventListener(self, key, type, bcapture);
-      lower && removeDOMAsEventListener(self, lower, type, bcapture);
+      // lower && removeDOMAsEventListener(self, lower, type, bcapture);
     } else {
       if (dh && dh.off(key, target, handler)) {
         removeDOMAsEventListener(target, key, self, bcapture);
-        lower && removeDOMAsEventListener(target, lower, self, bcapture);
+        // lower && removeDOMAsEventListener(target, lower, self, bcapture);
         if (!Object.keys(dh).length) {
           ws['delete'](self);
         }

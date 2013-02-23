@@ -36,6 +36,7 @@ button1.on("click", function () {
     .reflow()
     .css('transform', 'translateX(100px)')
     .on('transitionEnd', function transitionEnd() {
+      alert('ok');
       this.on('click', function click() {
         this
           .off('transitionEnd', transitionEnd)
