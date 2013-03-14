@@ -25,24 +25,28 @@ var WeakShim = window.WeakMap || function WeakShim(){
   var
     keys = [],
     values = [],
-    ws = {
-      get: function (key) {
-        return values[keys.indexOf(key)];
-      },
-      has: function (key) {
-        return -1 < (i = keys.indexOf(key));
-      },
-      set: function (key, value) {
-        values[ws.has(key) ? i : keys.push(key) - 1] = value;
-      },
-      "delete": function (key) {
-        if (ws.has(key)) keys.splice(i, 1), values.splice(i, 1);
-      }
-    },
-    i;
-  return ws;
+    i
+  ;
+  function get(key) {
+    return values[keys.indexOf(key)];
+  }
+  function has(key) {
+    return -1 < (i = keys.indexOf(key));
+  }
+  function set(key, value) {
+    values[has(key) ? i : keys.push(key) - 1] = value;
+  }
+  function del(key) {
+    if (has(key)) keys.splice(i, 1), values.splice(i, 1);
+  }
+  return {
+    get: get,
+    has: has,
+    set: set,
+    "delete": del
+  };
 };
-window.CustomEvent || (window.CustomEvent = function(){
+var CustomEvent = window.CustomEvent || function(){
   function initCustomEvent(
     type, bubbles, cancelable, detail
   ) {
@@ -62,7 +66,7 @@ window.CustomEvent || (window.CustomEvent = function(){
     }
     return evt;
   };
-}());
+}();
 function DOMHandler() {}
 (function(DOMHandlerPrototype){
   function push(array, value) {
@@ -109,9 +113,9 @@ function DOMHandler() {}
 }(DOMHandler.prototype));
 
 var
-  ws = new WeakShim,
-  HTMLElementPrototype = (
-    window.HTMLElement || window.Element
+  ws = new WeakShim(),
+  ElementPrototype = (
+    window.Element || window.Node || window.HTMLElement
   ).prototype,
   splitEvents = /,\s*/,
   // noCamelCase = /^[a-z]+$/,
@@ -128,10 +132,14 @@ function discoverJSKey(self, key) {
 }
 
 function notify(self, h, e) {
-  h.handleEvent ? h.handleEvent(e) : h.call(self, e);
+  if (h.handleEvent) {
+    h.handleEvent(e);
+  } else {
+    h.call(self, e);
+  }
 }
 
-HTMLElementPrototype.handleEvent = function handleEvent(e) {
+ElementPrototype.handleEvent = function handleEvent(e) {
   var dh = ws.get(this),
       handlers = dh && dh[e.type],
       i, h;
@@ -145,7 +153,7 @@ HTMLElementPrototype.handleEvent = function handleEvent(e) {
 
 window.on =
 document.on =
-HTMLElementPrototype.on = function on(target, type, handler, capture) {
+ElementPrototype.on = function on(target, type, handler, capture) {
   for (var
     self = this,
     selfListener = typeof target === 'string',
@@ -166,7 +174,7 @@ HTMLElementPrototype.on = function on(target, type, handler, capture) {
       //lower && addDOMAsEventListener(self, lower, type, bcapture);
     } else {
       if (!dh) {
-        ws.set(self, dh = new DOMHandler);
+        ws.set(self, dh = new DOMHandler());
       }
       dh.on(key, target, handler);
       addDOMAsEventListener(target, key, self, bcapture);
@@ -178,7 +186,7 @@ HTMLElementPrototype.on = function on(target, type, handler, capture) {
 
 window.off =
 document.off =
-HTMLElementPrototype.off = function off(target, type, handler, capture) {
+ElementPrototype.off = function off(target, type, handler, capture) {
   for (var
     self = this,
     selfListener = typeof target === 'string',
@@ -210,18 +218,18 @@ HTMLElementPrototype.off = function off(target, type, handler, capture) {
   return this;
 };
 
-HTMLElementPrototype.css = function css(key, value) {
+ElementPrototype.css = function css(key, value) {
   var
     self = this,
     style = self.style,
     string = typeof key === 'string',
-    css, list, i, out, p;
+    CSS, list, i, out, p;
   if (string) {
-    css = experimental(style, key, "css");
+    CSS = experimental(style, key, "css");
     if (value === undefined) {
-      return css && getComputedStyle(self, null).getPropertyValue(css);
-    } else if (css) {
-      style.cssText += ';' + css + ':' + value;
+      return CSS && getComputedStyle(self, null).getPropertyValue(CSS);
+    } else if (CSS) {
+      style.cssText += ';' + CSS + ':' + value;
     }
   } else {
     for (
@@ -229,8 +237,9 @@ HTMLElementPrototype.css = function css(key, value) {
       out = [],
       i = 0; i < list.length; i++
     ){
-      if (css = experimental(style, p = list[i], "css")) {
-        out.push(';', css, ':', key[p]);
+      CSS = experimental(style, p = list[i], "css");
+      if (CSS) {
+        out.push(';', CSS, ':', key[p]);
       }
     }
     style.cssText += out.join('');
@@ -240,7 +249,7 @@ HTMLElementPrototype.css = function css(key, value) {
 
 window.fire =
 document.fire =
-HTMLElementPrototype.fire = function fire(type, detail) {
+ElementPrototype.fire = function fire(type, detail) {
   this.dispatchEvent(new CustomEvent(type, {
     bubbles: true,
     cancelable: true,
@@ -249,21 +258,9 @@ HTMLElementPrototype.fire = function fire(type, detail) {
 };
 
 document.reflow =
-HTMLElementPrototype.reflow = function reflow() {
+ElementPrototype.reflow = function reflow() {
   return (document.documentElement.offsetWidth + 1) && this;
 };
-
-HTMLElementPrototype.createElement = function createElement(nodeName) {
-  return this.appendChild(document.createElement(nodeName));
-};
-
-HTMLElementPrototype.remove || (
-  HTMLElementPrototype.remove = function remove() {
-    var parentNode = this.parentNode;
-    parentNode && parentNode.removeChild(this);
-    return this;
-  }
-);
 
 try {
   addDOMAsEventListener(dummy, '_', dummy);
@@ -277,8 +274,7 @@ try {
         self._handleEvent || (
           self._handleEvent = handleEvent.bind(self)
         ) :
-        self
-      ,
+        self,
       capture
     );
   };
@@ -288,81 +284,82 @@ try {
       self._handleEvent || self,
       capture
     );
-  }
-}document.find = HTMLElementPrototype.find = function find(css) {
+  };
+}
+document.query = ElementPrototype.query = function find(css) {
   return this.querySelectorAll(css);
 };
 window.$ = function $(css, parent) {
-  return (parent || document).find(css);
-};var experimental = function(cache){
-  /*! (C) Andrea Giammarchi - Mit Style License */
-  var
-    prefixes = [
-      "Khtml", "khtml",
-      "O",     "o",
-      "MS",    "ms",
-      "Moz",   "moz",
-      "WebKit","Webkit", "webKit",
-      "webkit",
-      ""
-    ],
-    hasPrefix = new RegExp("\\b(?:" + prefixes.join("|").slice(0, -1) + ")\\b"),
-    hasOwnProperty = cache.hasOwnProperty,
-    reUp = /-([a-z])/g,
-    reDown = /([A-Z])/g,
-    placeUp = function (m, c) {
-      return c.toUpperCase();
-    },
-    placeDown = function (m, c) {
-      return "-" + c.toLowerCase();
-    }
-  ;
-  function find(object, what) {
-    for(var
-      firstChar = what.charAt(0),
-      what = what.slice(1),
-      i = prefixes.length,
-      key; i--;
-    ) {
-      key = prefixes[i];
-      key += (
-        key ? firstChar.toUpperCase() : firstChar
-      ) + what;
-      if (
-        key in object ||
-        ("on" + key).toLowerCase() in object
-      ) return key;
-    }
-  }
-  return function experimental(object, what, assign) {
+  return (parent || document).query(css);
+};
+var experimental = function(cache){
+    /*! (C) Andrea Giammarchi - Mit Style License */
     var
-      key = (assign === "css") + what,
-      result = cache[key] || (
-        cache[key] = find(object, what.replace(reUp, placeUp))
-      );
-    switch(assign) {
-      case 1:
-      case true:
-      // case "js":
-        if (result && !hasOwnProperty.call(object, what)) {
-          object[what] = object[result];
-        }
-        break;
-      case "css":
-        if (result) {
-          result = result.replace(reDown, placeDown);
-          if (hasPrefix.test(result)) {
-            result = "-" + result;
-          }
-        }
-        break;
+      prefixes = [
+        "Khtml", "khtml",
+        "O",     "o",
+        "MS",    "ms",
+        "Moz",   "moz",
+        "WebKit","Webkit", "webKit",
+        "webkit",
+        ""
+      ],
+      hasPrefix = new RegExp("\\b(?:" + prefixes.join("|").slice(0, -1) + ")\\b"),
+      hasOwnProperty = cache.hasOwnProperty,
+      reUp = /-([a-z])/g,
+      reDown = /([A-Z])/g,
+      placeUp = function (m, c) {
+        return c.toUpperCase();
+      },
+      placeDown = function (m, c) {
+        return "-" + c.toLowerCase();
+      }
+    ;
+    function find(object, wut) {
+      for(var
+        firstChar = wut.charAt(0),
+        what = wut.slice(1),
+        i = prefixes.length,
+        key; i--;
+      ) {
+        key = prefixes[i];
+        key += (
+          key ? firstChar.toUpperCase() : firstChar
+        ) + what;
+        if (
+          key in object ||
+          ("on" + key).toLowerCase() in object
+        ) return key;
+      }
     }
-    return result;
-  };
-}({});
+    return function experimental(object, what, assign) {
+      var
+        key = (assign === "css") + what,
+        result = cache[key] || (
+          cache[key] = find(object, what.replace(reUp, placeUp))
+        );
+      switch(assign) {
+        case 1:
+        case true:
+          if (result && !hasOwnProperty.call(object, what)) {
+            object[what] = object[result];
+          }
+          break;
+        case "css":
+          if (result) {
+            result = result.replace(reDown, placeDown);
+            if (hasPrefix.test(result)) {
+              result = "-" + result;
+            }
+          }
+          break;
+      }
+      return result;
+    };
+  }({});
 window.supports =
 document.supports =
-HTMLElementPrototype.supports = function supports(what, type, define) {
+ElementPrototype.supports = function supports(what, type, define) {
   var
     style = this.style,
     css = style && experimental(style, what, "css"),
@@ -384,8 +381,8 @@ var
 function createInvoker(method) {
   return function invoke(el) {
     method.apply(el, this);
-  }
-};
+  };
+}
 
 NodeListPrototype.every = emtyArray.every;
 NodeListPrototype.filter = emtyArray.filter;
@@ -400,10 +397,10 @@ var forEachONOFF = function (method) {
     return this;
   };
 };
-NodeListPrototype.on = forEachONOFF(HTMLElementPrototype.on);
-NodeListPrototype.off = forEachONOFF(HTMLElementPrototype.off);
+NodeListPrototype.on = forEachONOFF(ElementPrototype.on);
+NodeListPrototype.off = forEachONOFF(ElementPrototype.off);
 
-var forEachCSS = createInvoker(HTMLElementPrototype.css);
+var forEachCSS = createInvoker(ElementPrototype.css);
 NodeListPrototype.css = function css(key, value) {
   if (this.length) {
     if (value !== undefined)

@@ -7,8 +7,8 @@ var
 function createInvoker(method) {
   return function invoke(el) {
     method.apply(el, this);
-  }
-};
+  };
+}
 
 NodeListPrototype.every = emtyArray.every;
 NodeListPrototype.filter = emtyArray.filter;
@@ -23,10 +23,10 @@ var forEachONOFF = function (method) {
     return this;
   };
 };
-NodeListPrototype.on = forEachONOFF(HTMLElementPrototype.on);
-NodeListPrototype.off = forEachONOFF(HTMLElementPrototype.off);
+NodeListPrototype.on = forEachONOFF(ElementPrototype.on);
+NodeListPrototype.off = forEachONOFF(ElementPrototype.off);
 
-var forEachCSS = createInvoker(HTMLElementPrototype.css);
+var forEachCSS = createInvoker(ElementPrototype.css);
 NodeListPrototype.css = function css(key, value) {
   if (this.length) {
     if (value !== undefined)

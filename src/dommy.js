@@ -1,7 +1,7 @@
 var
-  ws = new WeakShim,
-  HTMLElementPrototype = (
-    window.HTMLElement || window.Element
+  ws = new WeakShim(),
+  ElementPrototype = (
+    window.Element || window.Node || window.HTMLElement
   ).prototype,
   splitEvents = /,\s*/,
   // noCamelCase = /^[a-z]+$/,
@@ -18,10 +18,14 @@ function discoverJSKey(self, key) {
 }
 
 function notify(self, h, e) {
-  h.handleEvent ? h.handleEvent(e) : h.call(self, e);
+  if (h.handleEvent) {
+    h.handleEvent(e);
+  } else {
+    h.call(self, e);
+  }
 }
 
-HTMLElementPrototype.handleEvent = function handleEvent(e) {
+ElementPrototype.handleEvent = function handleEvent(e) {
   var dh = ws.get(this),
       handlers = dh && dh[e.type],
       i, h;
@@ -35,7 +39,7 @@ HTMLElementPrototype.handleEvent = function handleEvent(e) {
 
 window.on =
 document.on =
-HTMLElementPrototype.on = function on(target, type, handler, capture) {
+ElementPrototype.on = function on(target, type, handler, capture) {
   for (var
     self = this,
     selfListener = typeof target === 'string',
@@ -56,7 +60,7 @@ HTMLElementPrototype.on = function on(target, type, handler, capture) {
       //lower && addDOMAsEventListener(self, lower, type, bcapture);
     } else {
       if (!dh) {
-        ws.set(self, dh = new DOMHandler);
+        ws.set(self, dh = new DOMHandler());
       }
       dh.on(key, target, handler);
       addDOMAsEventListener(target, key, self, bcapture);
@@ -68,7 +72,7 @@ HTMLElementPrototype.on = function on(target, type, handler, capture) {
 
 window.off =
 document.off =
-HTMLElementPrototype.off = function off(target, type, handler, capture) {
+ElementPrototype.off = function off(target, type, handler, capture) {
   for (var
     self = this,
     selfListener = typeof target === 'string',
@@ -100,18 +104,18 @@ HTMLElementPrototype.off = function off(target, type, handler, capture) {
   return this;
 };
 
-HTMLElementPrototype.css = function css(key, value) {
+ElementPrototype.css = function css(key, value) {
   var
     self = this,
     style = self.style,
     string = typeof key === 'string',
-    css, list, i, out, p;
+    CSS, list, i, out, p;
   if (string) {
-    css = experimental(style, key, "css");
+    CSS = experimental(style, key, "css");
     if (value === undefined) {
-      return css && getComputedStyle(self, null).getPropertyValue(css);
-    } else if (css) {
-      style.cssText += ';' + css + ':' + value;
+      return CSS && getComputedStyle(self, null).getPropertyValue(CSS);
+    } else if (CSS) {
+      style.cssText += ';' + CSS + ':' + value;
     }
   } else {
     for (
@@ -119,8 +123,9 @@ HTMLElementPrototype.css = function css(key, value) {
       out = [],
       i = 0; i < list.length; i++
     ){
-      if (css = experimental(style, p = list[i], "css")) {
-        out.push(';', css, ':', key[p]);
+      CSS = experimental(style, p = list[i], "css");
+      if (CSS) {
+        out.push(';', CSS, ':', key[p]);
       }
     }
     style.cssText += out.join('');
@@ -130,7 +135,7 @@ HTMLElementPrototype.css = function css(key, value) {
 
 window.fire =
 document.fire =
-HTMLElementPrototype.fire = function fire(type, detail) {
+ElementPrototype.fire = function fire(type, detail) {
   this.dispatchEvent(new CustomEvent(type, {
     bubbles: true,
     cancelable: true,
@@ -139,21 +144,9 @@ HTMLElementPrototype.fire = function fire(type, detail) {
 };
 
 document.reflow =
-HTMLElementPrototype.reflow = function reflow() {
+ElementPrototype.reflow = function reflow() {
   return (document.documentElement.offsetWidth + 1) && this;
 };
-
-HTMLElementPrototype.createElement = function createElement(nodeName) {
-  return this.appendChild(document.createElement(nodeName));
-};
-
-HTMLElementPrototype.remove || (
-  HTMLElementPrototype.remove = function remove() {
-    var parentNode = this.parentNode;
-    parentNode && parentNode.removeChild(this);
-    return this;
-  }
-);
 
 try {
   addDOMAsEventListener(dummy, '_', dummy);
@@ -167,8 +160,7 @@ try {
         self._handleEvent || (
           self._handleEvent = handleEvent.bind(self)
         ) :
-        self
-      ,
+        self,
       capture
     );
   };
@@ -178,5 +170,5 @@ try {
       self._handleEvent || self,
       capture
     );
-  }
+  };
 }

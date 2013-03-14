@@ -1,6 +1,6 @@
 window.supports =
 document.supports =
-HTMLElementPrototype.supports = function supports(what, type, define) {
+ElementPrototype.supports = function supports(what, type, define) {
   var
     style = this.style,
     css = style && experimental(style, what, "css"),

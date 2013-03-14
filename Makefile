@@ -26,7 +26,7 @@ build:
 #	make node
 #	make amd
 #	make test
-#	make hint
+	make hint
 
 # build generic version
 var:
@@ -61,7 +61,7 @@ amd:
 
 # hint built file
 hint:
-	node node_modules/jshint/bin/hint build/$(REPO).max.js
+	node node_modules/jshint/bin/jshint build/$(REPO).max.js
 
 # clean/remove build folder
 clean:
@@ -74,6 +74,13 @@ test:
 # launch polpetta (ctrl+click to open the page)
 web:
 	node node_modules/polpetta/build/polpetta ./
+
+# markdown the readme and view it
+preview:
+	node_modules/markdown/bin/md2html.js README.md > README.md.html
+	open README.md.html
+	sleep 5
+	rm README.md.html
 
 pages:
 	make var

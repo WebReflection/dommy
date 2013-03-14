@@ -1,0 +1,198 @@
+<!doctype html>
+<html>
+  <head>
+    <title>conversations sketch</title>
+    <style>
+    * {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+    }
+    .conversation {
+      font-size: 12px;
+      color: #333;
+      line-height: 16px;
+      position: relative;
+      padding: 0px;
+      margin: 1em 0 3em;
+      border: 1px solid silver;
+      background: #fff;
+      -webkit-border-radius: 5px;
+         -moz-border-radius: 5px;
+          -ms-border-radius: 5px;
+           -o-border-radius: 5px;
+              border-radius: 5px;
+    }
+
+    .conversation timestamp {
+      color: #999;
+    }
+
+    .conversation:before,
+    .conversation:after {
+      content: "";
+      position: absolute;
+      border-style: solid;
+      display:block; 
+      width:0;
+    }
+
+    .conversation:before {
+      top: -7px;
+      left: 20px;
+      border-width: 0 7px 7px;
+      border-color: silver transparent;
+    }
+
+    .conversation:after {
+      top: -6px;
+      left: 21px;
+      border-width: 0 6px 6px;
+      border-color:#fff transparent;
+    }
+
+    .conversation img {
+      position: absolute;
+      margin-top: 7px;
+      left: 7px;
+      width: 24px;
+      height: 24px;
+    }
+    .conversation > div:first-child img {
+      margin-top: 2px;
+    }
+    .conversation > div {
+      padding: 0;
+      position: relative;
+      min-height: 22px;
+      border-top: 1px solid silver;
+    }
+    .conversation > div:first-child {
+      border-top: none;
+    }
+    .conversation p {
+      padding-left: 37px;
+      padding-right: 7px;
+      margin-top: 5px;
+    }
+    .conversation .view-more img,
+    .conversation .view-more span,
+    .conversation .view-more timestamp {
+      display: none;
+    }
+    .conversation .view-more {
+      height: 16px;
+    }
+    .conversation .view-more:before {
+      content: "";
+      position: absolute;
+      display: block;
+      padding: 0;
+      margin: 0;
+      left: 12px;
+      top: 2px;
+      width: 16px;
+      height: 16px;
+      background-image: url(https://ma.twimg.com/twitter-mobile/2cce9394192a8b57944b0f868b3a80d34c883212/html5/applications/m5/assets/sprite_mobile.png);
+      background-repeat: no-repeat;
+      background-size: 280px 236px;
+      background-position: -27px -117px;
+      /* background-position: -156px -449px; */
+    }
+    .conversation strong:after {
+      content: ":";
+    }
+    .conversation .view-more strong:after {
+      content: "";
+    }
+    </style>
+  </head>
+  <body>
+    <div class="conversation">
+      <div>
+        <img src="https://twimg0-a.akamaihd.net/profile_images/203142740/blogspot_profile_normal.gif" />
+        <p>
+          <strong>Andrea Giammarchi</strong>
+          <span>dwaidwiudawiu i udwiudwa jdiaiu dw iudnwaabdu abw abdiu abdiu dyaiuawbiu </span>
+          <timestamp>16h</timestamp>
+        </p>
+      </div>
+    </div>
+    <div class="conversation">
+      <div>
+        <img src="https://twimg0-a.akamaihd.net/profile_images/203142740/blogspot_profile_normal.gif" />
+        <p>
+          <strong>Josh Brewer</strong>
+          <span>dwaidwiudawiu i udwiudwa jdiaiu dw iudnwaabdu abw abdiu abdiu dyaiuawbiu </span>
+          <timestamp>16h</timestamp>
+        </p>
+      </div>
+      <div>
+        <img src="https://twimg0-a.akamaihd.net/profile_images/203142740/blogspot_profile_normal.gif" />
+        <p>
+          <strong>Josh Brewer</strong>
+          <span>dwaidwiudawiu i udwiudwa jdiaiu dw iudnwaabdu abw abdiu abdiu dyaiuawbiu 
+            dwaidwiudawiu i udwiudwa jdiaiu dw iudnwaabdu abw abdiu abdiu dyaiuawbiu 
+            dwaidwiudawiu i udwiudwa jdiaiu dw iudnwaabdu abw abdiu abdiu dyaiuawbiu </span>
+          <timestamp>16h</timestamp>
+        </p>
+      </div>
+    </div>
+    <div class="conversation">
+      <div class="view-more">
+        <img src="https://twimg0-a.akamaihd.net/profile_images/203142740/blogspot_profile_normal.gif" />
+        <p>
+          <strong>View 11 more replies</strong>
+          <span></span>
+          <timestamp></timestamp>
+        </p>
+      </div>
+      <div>
+        <img src="https://twimg0-a.akamaihd.net/profile_images/203142740/blogspot_profile_normal.gif" />
+        <p>
+          <strong>Andrea Giammarchi</strong>
+          <span>dwaidwiudawiu i udwiudwa jdiaiu dw iudnwaabdu abw abdiu abdiu dyaiuawbiu 
+            dwaidwiudawiu i udwiudwa jdiaiu dw iudnwaabdu abw abdiu abdiu dyaiuawbiu 
+            dwaidwiudawiu i udwiudwa jdiaiu dw iudnwaabdu abw abdiu abdiu dyaiuawbiu </span>
+          <timestamp>16h</timestamp>
+        </p>
+      </div>
+    </div>
+    <div class="conversation">
+      <div class="view-more">
+        <img src="https://twimg0-a.akamaihd.net/profile_images/203142740/blogspot_profile_normal.gif" />
+        <p>
+          <strong>View 11 more replies</strong>
+          <span></span>
+          <timestamp></timestamp>
+        </p>
+      </div>
+      <div>
+        <img src="https://twimg0-a.akamaihd.net/profile_images/203142740/blogspot_profile_normal.gif" />
+        <p>
+          <strong>Josh Brewer</strong>
+          <span>dwaidwiudawiu i udwiudwa jdiaiu dw iudnwaabdu abw abdiu abdiu dyaiuawbiu </span>
+          <timestamp>16h</timestamp>
+        </p>
+      </div>
+      <div>
+        <img src="https://twimg0-a.akamaihd.net/profile_images/203142740/blogspot_profile_normal.gif" />
+        <p>
+          <strong>Andrea Giammarchi</strong>
+          <span>dwaidwiudawiu i udwiudwa jdiaiu dw iudnwaabdu abw abdiu abdiu dyaiuawbiu 
+            dwaidwiudawiu i udwiudwa jdiaiu dw iudnwaabdu abw abdiu abdiu dyaiuawbiu 
+            dwaidwiudawiu i udwiudwa jdiaiu dw iudnwaabdu abw abdiu abdiu dyaiuawbiu </span>
+          <timestamp>16h</timestamp>
+        </p>
+      </div>
+    </div>
+    <div class="conversation">
+      <div class="view-more">
+        <img src="https://twimg0-a.akamaihd.net/profile_images/203142740/blogspot_profile_normal.gif" />
+        <p>
+          <strong>View 11 more replies</strong>
+          <span></span>
+          <timestamp></timestamp>
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

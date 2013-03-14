@@ -1,4 +1,4 @@
-window.CustomEvent || (window.CustomEvent = function(){
+var CustomEvent = window.CustomEvent || function(){
   function initCustomEvent(
     type, bubbles, cancelable, detail
   ) {
@@ -18,4 +18,4 @@ window.CustomEvent || (window.CustomEvent = function(){
     }
     return evt;
   };
-}());
+}();
