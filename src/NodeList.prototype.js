@@ -26,7 +26,8 @@ var forEachONOFF = function (method) {
 NodeListPrototype.on = forEachONOFF(ElementPrototype.on);
 NodeListPrototype.off = forEachONOFF(ElementPrototype.off);
 
-var forEachCSS = createInvoker(ElementPrototype.css);
+var forEachCSS = createInvoker(ElementPrototype.css),
+    forEachDispatch = createInvoker(ElementPrototype.dispatchEvent);
 NodeListPrototype.css = function css(key, value) {
   if (this.length) {
     if (value !== undefined)
@@ -34,6 +35,15 @@ NodeListPrototype.css = function css(key, value) {
     return this[0].css(key);
   }
 };
+NodeListPrototype.fire = function fire(type, detail) {
+  this.forEach(forEachDispatch, [new CustomEvent(type, {
+    bubbles: true,
+    cancelable: true,
+    detail: detail
+  })]);
+};
+
+NodeListPrototype.reflow = document.reflow;
 
 function supportsThemAll(el) {
   return el.supports(this);

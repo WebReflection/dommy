@@ -11,6 +11,7 @@ VAR = src/WeakShim.js     \
       src/find.js         \
       src/experimental.js \
       src/supports.js     \
+      src/classList.js     \
       src/NodeList.prototype.js
 
 # make node files
