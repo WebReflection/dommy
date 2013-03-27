@@ -8,10 +8,10 @@ VAR = src/WeakShim.js     \
       src/CustomEvent.js  \
       src/DOMHandler.js   \
       src/$(REPO).js      \
-      src/find.js         \
+      src/query.js        \
       src/experimental.js \
       src/supports.js     \
-      src/classList.js     \
+      src/classList.js    \
       src/NodeList.prototype.js
 
 # make node files

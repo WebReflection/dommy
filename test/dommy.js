@@ -29,11 +29,11 @@ wru.test([
   }, {
     name: "find",
     test: function () {
-      wru.assert(document.find("li").length);
-      document.find("li").forEach(function (li, i) {
+      wru.assert(document.query("li").length);
+      document.query("li").forEach(function (li, i) {
         li.textContent = i + 1;
       });
-      document.find("input").on("change", function () {
+      document.query("input").on("change", function () {
         alert(this);
       });
     }
